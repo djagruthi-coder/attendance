@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Attendance System</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --success: #16a34a;
+      --warning: #ea580c;
+      --danger: #dc2626;
+      --bg: #f5f7fb;
+      --text: #0f172a;
+      --muted: #64748b;
+      --card-border: #e2e8f0;
+      --row-hover: #eff6ff;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 980px;
+      margin: 30px auto;
+      padding: 0 14px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    h2 { margin-bottom: 18px; }
+    .pageHeading {
+      margin-top: 10px;
+      margin-bottom: 18px;
+      font-size: 20px;
+      letter-spacing: 0.2px;
+      color: #0b1220;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      background: var(--primary);
+      color: #fff;
+      padding: 14px 18px;
+      border-radius: 12px;
+      box-shadow: 0 10px 26px rgba(30, 58, 138, 0.18);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 10px;
+      z-index: 1000;
+      margin-bottom: 16px;
+    }
+    .navbar-title {
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .navbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #topUserInfo {
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .logout-btn {
+      width: auto !important;
+      margin-top: 0 !important;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 860px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    .box {
+      border: 1px solid #dfe3ee;
+      border-radius: 10px;
+      padding: 16px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      box-sizing: border-box;
+      border-radius: 6px;
+      border: 1px solid #cfd6e4;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+    button:hover { background: #173a7a; }
+    .green-btn { background: #16a34a; }
+    .green-btn:hover { background: #13853d; }
+    .secondary-btn { background: #4b5563; }
+    .secondary-btn:hover { background: #374151; }
+    .orange-btn { background: #ea580c; }
+    .orange-btn:hover { background: #c2410c; }
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      box-sizing: border-box;
+      border-radius: 6px;
+      border: 1px solid #cfd6e4;
+      background: #fff;
+    }
+    #roleInfo { margin-top: 8px; font-weight: 700; color: #174ea6; }
+    #teacherBox, #studentBox { display: none; }
+    .result-box {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fc;
+      border-radius: 6px;
+      white-space: pre-line;
+      border: 1px solid #e5e9f2;
+    }
+    .alert-safe { color: var(--success); font-weight: 800; }
+    .alert-warning { color: var(--warning); font-weight: 800; }
+    .alert-critical { color: var(--danger); font-weight: 800; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #e5e9f2;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #e0e7ff;
+      font-weight: 900;
+      color: #0b1220;
+    }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr:hover { background: var(--row-hover); }
+    .table-wrap {
+      max-height: 320px;
+      overflow: auto;
+      border: 1px solid #e5e9f2;
+      border-radius: 6px;
+      margin-top: 10px;
+      background: #fff;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .summary .card {
+      border: 1px solid #e5e9f2;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    /* PORTAL CARDS */
+    .cardsRow {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin: 6px 0 10px;
+    }
+    @media (min-width: 860px) {
+      .cardsRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .portal-stat {
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    }
+    .stat-label {
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 950;
+      color: #0b1220;
+    }
+    #statusCard {
+      border-left: 6px solid #94a3b8;
+    }
+    .status-safe { border-left-color: var(--success); }
+    .status-warning { border-left-color: var(--warning); }
+    .status-critical { border-left-color: var(--danger); }
+    .status-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: #94a3b8;
+      flex: 0 0 auto;
+    }
+    .status-safe .status-dot { background: var(--success); }
+    .status-warning .status-dot { background: var(--warning); }
+    .status-critical .status-dot { background: var(--danger); }
+    .btn-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .small {
+      font-size: 13px;
+      color: #555;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h2 class="pageHeading">Attendance Portal</h2>
+
+  <div id="topBar" class="navbar" style="display:none;">
+    <div class="navbar-title">College Attendance Portal</div>
+    <div class="navbar-right">
+      <div id="topUserInfo"></div>
+      <button id="logoutBtn" type="button" class="logout-btn">Logout</button>
+    </div>
+  </div>
+
+  <div id="loginBox" class="box">
+    <h3>Login</h3>
+    <input id="rollNo" type="text" placeholder="Roll No (e.g. 24NN1A0501)" />
+    <input id="dob" type="date" />
+    <button id="loginBtn">Login</button>
+    <div id="loginMsg"></div>
+    <div id="roleInfo"></div>
+  </div>
+
+  <!-- Simple popup modal (student warning only). -->
+  <div id="lowAttendanceModal" style="display:none;">
+    <div
+      style="
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          border-radius: 14px;
+          max-width: 520px;
+          width: calc(100% - 28px);
+          padding: 16px 16px 14px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+          border: 1px solid #e5e9f2;
+        "
+      >
+        <div style="font-weight: 1000; margin-bottom: 10px; color: #7c2d12;">
+          Low Attendance Warning
+        </div>
+        <div id="lowAttendanceText" style="white-space: pre-line;"></div>
+        <div style="display:flex; gap:10px; margin-top: 14px;">
+          <button id="closeLowAttendanceBtn" type="button" class="secondary-btn" style="width:auto; padding: 10px 14px;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="teacherBox" class="box">
+    <h3>Teacher Dashboard</h3>
+    <div class="form-row">
+      <div>
+        <label for="branchSelect"><strong>Select Branch</strong></label>
+        <select id="branchSelect">
+          <option value="CSE">CSE</option>
+          <option value="ECE">ECE</option>
+        </select>
+      </div>
+      <div>
+        <label for="sectionSelect"><strong>Select Section</strong></label>
+        <select id="sectionSelect">
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="subjectSelect"><strong>Select Subject</strong></label>
+    <select id="subjectSelect">
+      <option>Math</option>
+      <option>Physics</option>
+      <option>Chemistry</option>
+      <option>English</option>
+      <option>Computer Science</option>
+    </select>
+    <p class="small">Check present students and leave absent students unchecked.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Roll Number</th>
+            <th>Name</th>
+            <th>Present</th>
+          </tr>
+        </thead>
+        <tbody id="studentsTableBody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button id="markAllBtn" type="button">Mark All Present</button>
+      <button id="clearAllBtn" type="button" class="secondary-btn">Clear All</button>
+      <button id="submitBulkBtn" type="button" class="green-btn">Submit Subject Attendance</button>
+    </div>
+    <div id="teacherResult" class="result-box"></div>
+
+    <h3 style="margin-top:20px;">Add Student (Teacher Only)</h3>
+    <div id="addStudentMsg" class="result-box" style="display:none;"></div>
+    <div class="table-wrap" style="max-height:none;">
+      <div class="form-row" style="margin-top:0;">
+        <div>
+          <label for="newRollNo"><strong>Roll No</strong></label>
+          <input id="newRollNo" type="text" placeholder="e.g. 24NN1A0501" />
+        </div>
+        <div>
+          <label for="newName"><strong>Name</strong></label>
+          <input id="newName" type="text" placeholder="Student Name" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="newDob"><strong>DOB</strong></label>
+          <input id="newDob" type="date" />
+        </div>
+        <div>
+          <label for="newEmail"><strong>Email</strong></label>
+          <input id="newEmail" type="text" placeholder="student@example.com" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="newBranch"><strong>Branch</strong></label>
+          <select id="newBranch">
+            <option value="CSE">CSE</option>
+            <option value="ECE">ECE</option>
+          </select>
+        </div>
+        <div>
+          <label for="newSection"><strong>Section</strong></label>
+          <select id="newSection">
+            <option value="A">A</option>
+            <option value="B">B</option>
+          </select>
+        </div>
+      </div>
+      <button id="addStudentBtn" type="button" class="green-btn" style="margin-top:12px; width:auto;">
+        Add Student
+      </button>
+      <div class="small" style="margin-top:10px;">After adding, the table refreshes automatically.</div>
+    </div>
+
+    <h3 style="margin-top:20px;">All Students (Read-only)</h3>
+    <button id="refreshAllBtn" type="button" class="orange-btn">Refresh All Student Attendance</button>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Roll Number</th>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Attended</th>
+            <th>Total</th>
+            <th>Percentage</th>
+            <th>Alert</th>
+          </tr>
+        </thead>
+        <tbody id="allStudentsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="studentBox" class="box">
+    <h3>Student Dashboard</h3>
+    <div id="welcomeText" class="result-box" style="display:none; white-space:normal;"></div>
+
+    <div class="cardsRow">
+      <div class="portal-stat">
+        <div class="stat-label">Overall Percentage</div>
+        <div class="stat-value" id="percentageText">0%</div>
+      </div>
+
+      <div class="portal-stat" id="statusCard">
+        <div class="status-header">
+          <span id="statusDot" class="status-dot"></span>
+          <div class="stat-label" style="margin:0;">Attendance Status</div>
+        </div>
+        <div class="stat-value" id="alertText">-</div>
+      </div>
+
+      <div class="portal-stat">
+        <div class="stat-label">Total Classes Attended</div>
+        <div class="stat-value" id="totalClassesText">0 / 0</div>
+      </div>
+    </div>
+    <div id="studentMessage" class="result-box"></div>
+    <h4 style="margin-top:16px;">Subject-wise Attendance</h4>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Attended</th>
+            <th>Total</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody id="subjectTableBody"></tbody>
+      </table>
+    </div>
+    <div class="grid-2" style="margin-top:12px;">
+      <div class="box">
+        <h4>Attendance Overview</h4>
+        <canvas id="pieChart"></canvas>
+      </div>
+      <div class="box">
+        <h4>Subject Performance</h4>
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:5000";
+    let loggedInRollNo = "";
+    let loggedInRole = "";
+    let pieChart = null;
+    let barChart = null;
+
+    const rollNoInput = document.getElementById("rollNo");
+    const dobInput = document.getElementById("dob");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginMsg = document.getElementById("loginMsg");
+    const loginBox = document.getElementById("loginBox");
+    const topBar = document.getElementById("topBar");
+    const topUserInfo = document.getElementById("topUserInfo");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const roleInfo = document.getElementById("roleInfo");
+    const teacherBox = document.getElementById("teacherBox");
+    const studentBox = document.getElementById("studentBox");
+    const studentsTableBody = document.getElementById("studentsTableBody");
+    const branchSelect = document.getElementById("branchSelect");
+    const sectionSelect = document.getElementById("sectionSelect");
+    const subjectSelect = document.getElementById("subjectSelect");
+    const markAllBtn = document.getElementById("markAllBtn");
+    const clearAllBtn = document.getElementById("clearAllBtn");
+    const submitBulkBtn = document.getElementById("submitBulkBtn");
+    const refreshAllBtn = document.getElementById("refreshAllBtn");
+    const teacherResult = document.getElementById("teacherResult");
+    const allStudentsBody = document.getElementById("allStudentsBody");
+    const percentageText = document.getElementById("percentageText");
+    const alertText = document.getElementById("alertText");
+    const studentMessage = document.getElementById("studentMessage");
+    const subjectTableBody = document.getElementById("subjectTableBody");
+    const totalClassesText = document.getElementById("totalClassesText");
+    const statusCard = document.getElementById("statusCard");
+    const statusDot = document.getElementById("statusDot");
+    const welcomeText = document.getElementById("welcomeText");
+
+    const addStudentBtn = document.getElementById("addStudentBtn");
+    const addStudentMsg = document.getElementById("addStudentMsg");
+    const newRollNo = document.getElementById("newRollNo");
+    const newName = document.getElementById("newName");
+    const newDob = document.getElementById("newDob");
+    const newBranch = document.getElementById("newBranch");
+    const newSection = document.getElementById("newSection");
+    const newEmail = document.getElementById("newEmail");
+    const lowAttendanceModal = document.getElementById("lowAttendanceModal");
+    const lowAttendanceText = document.getElementById("lowAttendanceText");
+    const closeLowAttendanceBtn = document.getElementById("closeLowAttendanceBtn");
+
+    function saveLoginToLocalStorage() {
+      localStorage.setItem("attendance_roll_no", loggedInRollNo);
+      localStorage.setItem("attendance_role", loggedInRole);
+    }
+
+    function clearLoginFromLocalStorage() {
+      localStorage.removeItem("attendance_roll_no");
+      localStorage.removeItem("attendance_role");
+    }
+
+    function loadLoginFromLocalStorage() {
+      const savedRoll = localStorage.getItem("attendance_roll_no") || "";
+      const savedRole = localStorage.getItem("attendance_role") || "";
+      return { savedRoll, savedRole };
+    }
+
+    function showLoggedInLayout() {
+      loginBox.style.display = "none";
+      topBar.style.display = "block";
+      topUserInfo.textContent = `Logged in as: ${loggedInRole.toUpperCase()}`;
+    }
+
+    function showLoggedOutLayout() {
+      topBar.style.display = "none";
+      loginBox.style.display = "block";
+    }
+
+    function showLowAttendancePopup(text) {
+      if (!lowAttendanceModal || !lowAttendanceText) return;
+      lowAttendanceText.textContent = text;
+      lowAttendanceModal.style.display = "block";
+    }
+
+    function hideLowAttendancePopup() {
+      if (!lowAttendanceModal) return;
+      lowAttendanceModal.style.display = "none";
+    }
+
+    function resetRoleSections() {
+      teacherBox.style.display = "none";
+      studentBox.style.display = "none";
+      teacherResult.textContent = "";
+      studentMessage.textContent = "";
+      if (welcomeText) {
+        welcomeText.style.display = "none";
+        welcomeText.textContent = "";
+      }
+      roleInfo.textContent = "";
+      studentsTableBody.innerHTML = "";
+      allStudentsBody.innerHTML = "";
+      subjectTableBody.innerHTML = "";
+      percentageText.textContent = "0%";
+      alertText.textContent = "-";
+      alertText.className = "";
+      totalClassesText.textContent = "0 / 0";
+      if (statusCard) statusCard.className = "portal-stat";
+      if (statusDot) statusDot.className = "status-dot";
+    }
+
+    async function loadDashboardByRole() {
+      resetRoleSections();
+      roleInfo.textContent = `Logged in as: ${loggedInRole.toUpperCase()}`;
+      showLoggedInLayout();
+
+      if (loggedInRole === "teacher") {
+        teacherBox.style.display = "block";
+        await loadTeacherTable();
+        await loadAllStudentsAttendance();
+      } else if (loggedInRole === "student") {
+        studentBox.style.display = "block";
+        await loadStudentAttendance();
+      }
+    }
+
+    function alertClass(alert) {
+      if (alert === "Critical") return "alert-critical";
+      if (alert === "Warning") return "alert-warning";
+      return "alert-safe";
+    }
+
+    function statusCardClass(alert) {
+      if (alert === "Critical") return "status-critical";
+      if (alert === "Warning") return "status-warning";
+      return "status-safe";
+    }
+
+    function renderStudentCharts(overall, subjectWise) {
+      const attended = overall.attended;
+      const total = overall.total;
+      const percentage = overall.percentage;
+      const missed = Math.max(total - attended, 0);
+      const labels = subjectWise.map((item) => item.subject);
+      const values = subjectWise.map((item) => item.percentage);
+
+      if (pieChart) pieChart.destroy();
+      if (barChart) barChart.destroy();
+
+      pieChart = new Chart(document.getElementById("pieChart"), {
+        type: "pie",
+        data: {
+          labels: ["Attended", "Missed"],
+          datasets: [{ data: [attended, missed], backgroundColor: ["#16a34a", "#ef4444"] }]
+        },
+        options: { responsive: true }
+      });
+
+      barChart = new Chart(document.getElementById("barChart"), {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{ data: values, backgroundColor: "#2563eb" }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { min: 0, max: 100, ticks: { stepSize: 10 } }
+          }
+        }
+      });
+    }
+
+    async function loadTeacherTable() {
+      const response = await fetch(`${API_BASE}/students`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          actor_roll_no: loggedInRollNo,
+          branch: branchSelect.value,
+          section: sectionSelect.value
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        teacherResult.textContent = data.message || "Failed to load students.";
+        return;
+      }
+      studentsTableBody.innerHTML = "";
+      data.students.forEach((student) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${student.roll_no}</td>
+          <td>${student.name}</td>
+          <td style="text-align:center;">
+            <input type="checkbox" class="present-check" data-roll="${student.roll_no}" style="width:auto; transform:scale(1.2);" />
+          </td>
+        `;
+        studentsTableBody.appendChild(row);
+      });
+    }
+
+    async function loadAllStudentsAttendance() {
+      const response = await fetch(`${API_BASE}/teacher_all_attendance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_roll_no: loggedInRollNo })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        teacherResult.textContent = data.message || "Failed to fetch all attendance.";
+        return;
+      }
+      allStudentsBody.innerHTML = "";
+      data.students.forEach((item) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.roll_no}</td>
+          <td>${item.name}</td>
+          <td>${item.branch}-${item.section}</td>
+          <td>${item.attended}</td>
+          <td>${item.total}</td>
+          <td>${item.percentage}%</td>
+          <td class="${alertClass(item.alert)}">${item.alert}</td>
+        `;
+        allStudentsBody.appendChild(row);
+      });
+    }
+
+    async function loadStudentAttendance() {
+      const response = await fetch(`${API_BASE}/get_attendance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_roll_no: loggedInRollNo, roll_no: loggedInRollNo })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        studentMessage.textContent = data.message || "Failed to fetch attendance.";
+        return;
+      }
+
+      const overall = data.overall;
+      const subjectWise = data.subject_wise;
+
+      if (welcomeText && data.welcome && data.welcome.name) {
+        welcomeText.style.display = "block";
+        welcomeText.textContent = `Welcome, ${data.welcome.name} (${data.welcome.class_str})`;
+      }
+
+      percentageText.textContent = `${overall.percentage}%`;
+      alertText.textContent = overall.alert;
+      alertText.className = alertClass(overall.alert);
+      if (statusCard) statusCard.className = `portal-stat ${statusCardClass(overall.alert)}`;
+      studentMessage.textContent = `${overall.message}\nAttended: ${overall.attended}, Total: ${overall.total}`;
+      totalClassesText.textContent = `${overall.attended} / ${overall.total}`;
+
+      subjectTableBody.innerHTML = "";
+      subjectWise.forEach((item) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.subject}</td>
+          <td>${item.attended}</td>
+          <td>${item.total}</td>
+          <td>${item.percentage}%</td>
+        `;
+        subjectTableBody.appendChild(row);
+      });
+
+      renderStudentCharts(overall, subjectWise);
+
+      // Student-only warning popup (< 80%).
+      if (overall && typeof overall.percentage === "number" && overall.percentage < 80) {
+        showLowAttendancePopup(
+          "⚠️ Your attendance is below 80%. Please attend upcoming classes to avoid shortage."
+        );
+      } else {
+        hideLowAttendancePopup();
+      }
+    }
+
+    loginBtn.addEventListener("click", async () => {
+      const roll_no = rollNoInput.value.trim();
+      const dob = dobInput.value;
+
+      if (!roll_no || !dob) {
+        loginMsg.textContent = "Please enter roll number and date of birth.";
+        resetRoleSections();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roll_no, dob })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          loginMsg.textContent = data.message || "Login failed.";
+          resetRoleSections();
+          return;
+        }
+
+        loggedInRollNo = data.roll_no;
+        loggedInRole = data.role;
+        saveLoginToLocalStorage();
+        loginMsg.textContent = "Login successful.";
+        await loadDashboardByRole();
+      } catch (error) {
+        loginMsg.textContent = "Server error. Please try again.";
+        resetRoleSections();
+        showLoggedOutLayout();
+      }
+    });
+
+    submitBulkBtn.addEventListener("click", async () => {
+      if (!loggedInRollNo || loggedInRole !== "teacher") {
+        teacherResult.textContent = "Please login as teacher first.";
+        return;
+      }
+
+      const checks = document.querySelectorAll(".present-check");
+      const records = Array.from(checks).map((item) => ({
+        roll_no: item.dataset.roll,
+        present: item.checked
+      }));
+
+      try {
+        const response = await fetch(`${API_BASE}/bulk_attendance_subject`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            actor_roll_no: loggedInRollNo,
+            branch: branchSelect.value,
+            section: sectionSelect.value,
+            subject: subjectSelect.value,
+            records
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          teacherResult.textContent = data.message || "Failed to submit attendance.";
+          return;
+        }
+
+        teacherResult.textContent =
+          `${data.message}\nSubject: ${data.subject}\nUpdated: ${data.updated_count}\nSkipped: ${data.skipped_count}`;
+        await loadAllStudentsAttendance();
+      } catch (error) {
+        teacherResult.textContent = "Server error while submitting attendance.";
+      }
+    });
+
+    refreshAllBtn.addEventListener("click", async () => {
+      if (!loggedInRollNo || loggedInRole !== "teacher") {
+        teacherResult.textContent = "Please login as teacher first.";
+        return;
+      }
+      await loadAllStudentsAttendance();
+    });
+
+    function showAddStudentMessage(text, isError) {
+      if (!addStudentMsg) return;
+      addStudentMsg.style.display = "block";
+      addStudentMsg.textContent = text;
+      addStudentMsg.style.borderColor = isError ? "#fecaca" : "#bbf7d0";
+    }
+
+    addStudentBtn.addEventListener("click", async () => {
+      if (!loggedInRollNo || loggedInRole !== "teacher") {
+        showAddStudentMessage("Please login as teacher first.", true);
+        return;
+      }
+
+      const roll_no = newRollNo.value.trim();
+      const name = newName.value.trim();
+      const dob = newDob.value;
+      const branch = newBranch.value;
+      const section = newSection.value;
+      const email = newEmail.value.trim();
+
+      try {
+        const response = await fetch(`${API_BASE}/add_student`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            actor_roll_no: loggedInRollNo,
+            roll_no,
+            name,
+            dob,
+            branch,
+            section,
+            email
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          showAddStudentMessage(data.message || "Failed to add student.", true);
+          return;
+        }
+
+        showAddStudentMessage(data.message || "Student added successfully.", false);
+        newRollNo.value = "";
+        newName.value = "";
+        newDob.value = "";
+        newEmail.value = "";
+
+        // Refresh current class table and the read-only list.
+        await loadTeacherTable();
+        await loadAllStudentsAttendance();
+      } catch (error) {
+        showAddStudentMessage("Server error while adding student.", true);
+      }
+    });
+
+    branchSelect.addEventListener("change", async () => {
+      if (loggedInRole === "teacher") {
+        await loadTeacherTable();
+        teacherResult.textContent = "";
+      }
+    });
+
+    sectionSelect.addEventListener("change", async () => {
+      if (loggedInRole === "teacher") {
+        await loadTeacherTable();
+        teacherResult.textContent = "";
+      }
+    });
+
+    markAllBtn.addEventListener("click", () => {
+      const checks = document.querySelectorAll(".present-check");
+      checks.forEach((item) => {
+        item.checked = true;
+      });
+    });
+
+    clearAllBtn.addEventListener("click", () => {
+      const checks = document.querySelectorAll(".present-check");
+      checks.forEach((item) => {
+        item.checked = false;
+      });
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      clearLoginFromLocalStorage();
+      loggedInRollNo = "";
+      loggedInRole = "";
+      resetRoleSections();
+      showLoggedOutLayout();
+      loginMsg.textContent = "Logged out successfully.";
+      roleInfo.textContent = "";
+      topUserInfo.textContent = "";
+      rollNoInput.value = "";
+      dobInput.value = "";
+      hideLowAttendancePopup();
+    });
+
+    if (closeLowAttendanceBtn) {
+      closeLowAttendanceBtn.addEventListener("click", hideLowAttendancePopup);
+    }
+
+    // Auto login on page refresh using localStorage.
+    window.addEventListener("load", async () => {
+      const { savedRoll, savedRole } = loadLoginFromLocalStorage();
+      if (!savedRoll || !savedRole) {
+        showLoggedOutLayout();
+        return;
+      }
+
+      loggedInRollNo = savedRoll;
+      loggedInRole = savedRole;
+      loginMsg.textContent = "";
+      try {
+        await loadDashboardByRole();
+      } catch (error) {
+        clearLoginFromLocalStorage();
+        loggedInRollNo = "";
+        loggedInRole = "";
+        resetRoleSections();
+        showLoggedOutLayout();
+      }
+    });
+  </script>
+</body>
+</html>
